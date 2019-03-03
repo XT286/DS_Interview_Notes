@@ -412,32 +412,79 @@ This means we have 95\% of confidence that the true value of our mean falls into
 
 We also want to mention the relationship to the p-value here: the discussion above compares the calculated $z$ to $z_{n,\alpha/2}$. We found $z_{n,\alpha_2}$ via the normal distribution table. We can also find the corresponding $\alpha$ value of our calculated $z$. This is the probability of rejecting the null hypothesis and made a mistake, so the $\alpha$ value here is in fact our p-value.
 
-\subsubsection{Example - Click Through Rate (CTR)}
+\subsubsection{Example - Coin Flipping}
 
 We want to discuss a most basic example of the z-test, which is also the most commonly seen interview question on the A/B testing. 
 
-Assume we have a new version of online ad, and we detected $n$ users who have viewed the ad. Inside the $n$ users we have $k$ users who click on the ad. Now we have a click through rate (CTR) $p = k/n$. We want to compare this CTR with the CTR from an old version of the ad, say $\hat p$. Naturally, the null hypothesis here is $H_0: p = \hat p$
+We have a coin. We want to test if the coin is fair by continuously flipping it and record how many heads and how many tails we will get. Assume we flip the coin $n$ times and get $k$ heads. Let $\hat p = k/n$. Naturally, the null hypothesis here is $H_0: \hat p = 0.5$.
 
-IMPORTANT NOTE: it is very easy to confuse about the "experiment" we run here. We don't view the whole event as one experiment. Instead, we view the arrival of each user as an experiment. We can view each arrival as an independent Bernoulli variable, which either clicks through (get a value $1$) with probability $p$, or does not click through (get a value $0$) with probability $(1-p)$.
+IMPORTANT NOTE: it is very easy to confuse about the "experiment" we run here. We don't view the whole event as one experiment. Instead, we view each flip as an experiment. We can view the result of each flip as an independent Bernoulli variable, which either gets head with probability $p$, or gets tail with probability $(1-p)$. Here $p=0.5$, but we can of course use other values, depending on what we want to test.
 
-Now we can regard the CTR $p = k/n$ as the mean of the set of Bernoulli trials. Note that this is a binomial variable. We would also like to know the variance of the Bernoulli experiments - as in Section 2 we know that it has variance $p(1-p)$.
+Now suppose the null hypothesis holds, then the mean of the set of Bernoulli trials is equal to $p$. Note that this is a binomial variable. We would also like to know the variance of the Bernoulli experiments - as in Section 2 we know that it has variance $p(1-p)/n$.
 
-It is very important to know that when the number of trials is large, we can approximate this quantity using normal distribution (the Central Limit Theorem). Therefore we can run the z-test with the following z-value
+It is very important to know that when the number of trials is large, we can approximate this quantity using normal distribution (the Central Limit Theorem). Since in this case the variance is known, we can run the z-test with the following z-value
 $$
-z = \frac{p-\hat p}{\sqrt{p(1-p)/n}}
+z = \frac{\hat p-p}{\sqrt{p(1-p)/n}}
 $$
 Therefore if we have $z>z_{n,\alpha/2}$, we can reject the null hypothesis and say that the new version of the ad does make a difference.
 
-Furthermore, we can compute the confidence interval for the CTR:
+Furthermore, we can compute the confidence interval for the result:
 $$
-[p-z_{n,\alpha/2}\sqrt{p(1-p)/n}, \qquad p+z_{n,\alpha/2}\sqrt{p(1-p)/n}]
+[\hat p-z_{n,\alpha/2}\sqrt{p(1-p)/n}, \qquad \hat p+z_{n,\alpha/2}\sqrt{p(1-p)/n}]
 $$
-This means we have $(1-\alpha)$ confidence that the true CTR of our new version of ad lies in this interval. If $\hat p$ is not, that means it is different to the true CTR.
+This means we have $(1-\alpha)$ confidence that the true probability of getting the head lies in this interval. If $p=0.5$ does not lie in this interval, that means it is different to the true value, and hence the coin is not fair.
 
 \subsubsection{One sample t-test}
 
-\subsubsection{Two sample t-test}
+If we have samples set $\{x_i\}$, and we know that the set follows a normal distribution with unknown variance and unknown mean. We want to test if the mean of the set $\bar x$ is significant different to a given value $\mu_0$. Note the difference to the z-test here is that the variance is unknown. Hence we will need to use the estimator of the variance, as discussed above.
 
+Let $S = \frac{\sum (x_i-\bar x)^2}{n-1}$, the unbiased estimator of $\sigma^2$. Then the t-stats to test $H_0: \bar x=\mu_0$ is:
+$$
+t = \frac{|\bar x-\mu_0|}{s/\sqrt{n}}.
+$$
+From here on it is the standard procedure: we can either A) read the table and find $t_{n-1,\alpha/2}$ and if $t>t_{n-1,\alpha/2}$ the we reject $H_0$; or B) read the table and find the corresponding p-value of the $t$, and compare the p-value with the threshold $\alpha$ (normally $0.05$), if $p<\alpha/2$, then we reject $H_0$.
+
+\subsubsection{Two sample t-test}
+This is perhaps the most common A/B testing scenario. The two sample t-test is to test whether two populations are significantly different from one another.
+
+If the two sets of data are {\bf paired}: then we can just use one sample t-test on the differences of the paired samples and $\mu_0 = 0$.
+
+If the two sets of data are {\bf unpaired}: that means assuming the two populations are independent (most common cases). In this case we want to test $H_0:$ the means of the two populations are equal.
+
+If we assume {\bf equal variance}, then we should look at 
+$$
+t = \frac{\bar x_1-\bar x_2}{\sqrt{s^2(\frac{1}{n_1}+\frac{1}{n_2})}}.
+$$
+If we assume {\bf unequal variance}, then we should look at 
+$$
+t = \frac{\bar x_1-\bar x_2}{\sqrt{\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2}}}
+$$
+In both cases the degree of freedom is $(n_1-1)+(n_2-1)$.
+
+\subsubsection{Example: Click Through Rate (CTR)}
+
+Consider the scenario that we have two ads (or maybe two version of a website), we want to test whether they will introduce a significant difference. We collected $n_1$ users who have viewed the new version of the ad. Inside the $n_1$ users we have $k_1$ users who click on the ad. We also have a reference group of $n_2$ users in which $k_2$ clicked on the on the old version of the ad. Now we have click through rates (CTR) for the two groups $\hat p_1 = k_1/n_1$ and $\hat p_2 = k_2/n_2$.
+
+IMPORTANT NOTICE: We now want to test whether the {\em true values} $p_1, p_2$ of the CTR of the two version is the same. The problem is that we don't know the true values. We can only use the results of the experiment $\hat p_1$ and $\hat p_2$ to estimate the true values $p_1$ and $p_2$.
+
+As before, under the null hypothesis, we can assume that the results both limit to normal distributions. Then we have
+$$
+\hat p_1 \sim n(p_1,p_1(1-p_1)/n_1)
+$$
+$$
+\hat p_2 \sim n(p_2,p_2(1-p_2)/n_2)
+$$
+We can deduce that
+$$
+\hat p_1 - \hat p_2 \sim n(p_1-p_2, \frac{p_1(1-p_1)}{n_1}+\frac{p_2(1-p_2)}{n_2})
+$$
+where in fact we will plug $\hat p_1$ into $p_1$ and $\hat p_2$ into $p_2$, and compute the following t-stats:
+$$
+t = \frac{|\hat p_1-\hat p_2|}{\sqrt{\frac{p_1(1-p_1)}{n_1}+\frac{p_2(1-p_2)}{n_2}}}.
+$$
+The degree of freedom is $n_1+n_2-2$. As long as $t>t_{n_1+n_2-2, \alpha/2}$, we can reject the null hypothesis and declare that the two versions make a difference.
+
+\subsubsection{$\chi^2$ test}
 %-------------------------------------------------------------------------------------------------------------------------------
 %----------------------------------------------------Machine Learning---------------------------------------------------
 %-------------------------------------------------------------------------------------------------------------------------------
@@ -912,7 +959,9 @@ Both requires scaling the parameters.
 
 \section{Recommendation System}
 
+\subsection{Content Based Recommendation}
 
+\subsection{Collaborative Filtering}
 %-------------------------------------------------------------------------------------------------------------------------------
 %------------------------------------------------------Deep Learning-----------------------------------------------------
 %-------------------------------------------------------------------------------------------------------------------------------
@@ -925,18 +974,17 @@ Both requires scaling the parameters.
 
 \section{Coding}
 
-\subsection{}
 
 \begin{thebibliography}{}
 \bibitem[SI]{SI}
-aaa
+G.~Casella, R.~L.~Berger,
 \newblock Statistics Inferences
-\newblock {\em }
+\newblock (2001) {\em Duxbury Press.} ISBN 0-534-24312-6.
 
 \bibitem[ISLR]{ISLR}
-aaa
+G.~James, D.~Witten, T.~Hastie, R.~Tibshirani,
 \newblock An Introduction to Statistics Learning with Applications in R
-\newblock {\em }
+\newblock (2013) {\em Springer} ISBN 1461471370.
 
 \end{thebibliography}
 \end{document}
